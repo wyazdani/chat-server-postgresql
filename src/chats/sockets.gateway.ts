@@ -16,7 +16,7 @@ import {ClientSocketInfo} from "./clientSocketInfo";
 import {RoleEnum} from "../support/support.gateway";
 
 
-@WebSocketGateway({ allowEIO3:true, cors:true })
+@WebSocketGateway({ allowEIO3:true })
 export class SocketsGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
 //  export class ChatsGateway {
   @WebSocketServer() wss: Server;
