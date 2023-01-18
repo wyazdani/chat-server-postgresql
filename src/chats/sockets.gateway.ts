@@ -13,21 +13,22 @@ import axios from 'axios';
 import appConfig from '../config/app.config';
 import {RoomInfo} from "./roomInfo";
 import {ClientSocketInfo} from "./clientSocketInfo";
+import {RoleEnum} from "../support/support.gateway";
 
 
-@WebSocketGateway({ namespace: '/chats', allowEIO3:true })
-export class ChatsGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
+@WebSocketGateway({ allowEIO3:true, cors:true })
+export class SocketsGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
 //  export class ChatsGateway {
   @WebSocketServer() wss: Server;
   private lstClients = [];
   private lstRooms = [];
-  private logger: Logger = new Logger('ChatGateway');
+  private logger: Logger = new Logger('SocketsGateway');
   public chatId = '';
 
   constructor(private httpService: HttpService) {}
 
   afterInit(server: Server) {
-    this.logger.log('Initialized ChatGateway!');
+    this.logger.log('Initialized SocketsGateway!');
   }
 
   handleConnection(client: Socket, ...args: any[]) {
@@ -46,7 +47,7 @@ export class ChatsGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
   @SubscribeMessage('connect_users')
   async connect(client: Socket, payload: any): Promise<void> {
 
-    const data = { sender_id: payload.sender_id, recipient_id: payload.receiver_id };
+    const data = { recipient_id: payload.receiver_id };
     const room = await this.httpService.axiosRef.post( `${appConfig().backendDomain}/messages/create-room`,data, {
       headers: {
         Authorization: payload.token
@@ -62,11 +63,10 @@ export class ChatsGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
   async handleMessage(client: Socket, payload: any) {
     const curDate = new Date();
     const _message = {
-      user_id: payload.user_id,
       message: payload.message,
       msSent: 1,
       date: curDate,
-      attachment: payload.attachment,
+      attachment: payload?.attachment,
       token: payload.token
     };
     const room = this.getRoomOfClient(client);
@@ -153,6 +153,41 @@ export class ChatsGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
       objRoom.UserMessages.push(UserMessage);
       return await this.saveMessage(clientRoom);
     }
+  }
+
+  @SubscribeMessage('msgToAdmin')
+  public async adminMessage(client: Socket, payload: any): Promise<void> {
+    const ticketMessage = {
+      ticket_id: payload.ticket_id,
+      message: payload.message,
+      role: RoleEnum.ADMIN,
+      attachment: payload?.attachment,
+    };
+    const message = await this.httpService.axiosRef.post( `${appConfig().backendDomain}/system-supports/message`,ticketMessage, {
+      headers: {
+        Authorization: payload.token
+      }
+    } );
+
+    //const message = await this.supportService.addMessage(ticketMessage);
+    this.wss.emit('msgSupport', message.data);
+  }
+
+  @SubscribeMessage('msgToUser')
+  public async userMessage(client: Socket, payload: any): Promise<void> {
+    const ticketMessage = {
+      ticket_id: payload.ticket_id,
+      message: payload.message,
+      role: RoleEnum.USER,
+      attachment: payload?.attachment,
+    };
+    const message = await this.httpService.axiosRef.post( `${appConfig().backendDomain}/system-supports/message`,ticketMessage, {
+      headers: {
+        Authorization: payload.token
+      }
+    } );
+
+    this.wss.emit('msgSupport', message.data);
   }
 
 }

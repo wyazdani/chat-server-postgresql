@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { ChatsGateway } from './chats/chats.gateway';
+import { SocketsGateway } from './chats/sockets.gateway';
 import { HttpModule } from '@nestjs/axios';
 import { ConfigModule } from '@nestjs/config';
 import {SupportGateway} from "./support/support.gateway";
@@ -17,7 +17,7 @@ import {SupportGateway} from "./support/support.gateway";
     maxRedirects: 5,
   }),],
   controllers: [AppController],
-  providers: [AppService,  ChatsGateway, SupportGateway],
+  providers: [AppService,  SocketsGateway],
 
 })
 export class AppModule {}
