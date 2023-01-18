@@ -16,7 +16,7 @@ export enum RoleEnum {
   ADMIN = 'admin',
   USER = 'user',
 }
-@WebSocketGateway({ namespace: '/support' })
+@WebSocketGateway({ namespace: '/support', allowEIO3:true })
 export class SupportGateway
   implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
 {

@@ -15,7 +15,7 @@ import {RoomInfo} from "./roomInfo";
 import {ClientSocketInfo} from "./clientSocketInfo";
 
 
-@WebSocketGateway({ namespace: '/chats' })
+@WebSocketGateway({ namespace: '/chats', allowEIO3:true })
 export class ChatsGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
 //  export class ChatsGateway {
   @WebSocketServer() wss: Server;
