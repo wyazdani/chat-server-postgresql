@@ -16,7 +16,7 @@ import {ClientSocketInfo} from "./clientSocketInfo";
 import {RoleEnum} from "../support/support.gateway";
 
 
-@WebSocketGateway({ allowEIO3:true })
+@WebSocketGateway({ allowEIO3:true, cors:true })
 export class SocketsGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
 //  export class ChatsGateway {
   @WebSocketServer() wss: Server;
@@ -70,8 +70,9 @@ export class SocketsGateway implements OnGatewayInit, OnGatewayConnection, OnGat
       token: payload.token
     };
     const room = this.getRoomOfClient(client);
-    this.logger.log(`Client Room ` + room);
+    this.logger.log(`Message Body`, _message);
     const message = await this.addMessage(_message, room);
+    this.logger.log(`Message Body Response`, message);
     this.wss.to(room).emit('msgToClient', message);
   }
 
@@ -170,6 +171,7 @@ export class SocketsGateway implements OnGatewayInit, OnGatewayConnection, OnGat
     } );
 
     //const message = await this.supportService.addMessage(ticketMessage);
+
     this.wss.emit('msgSupport', message.data);
   }
 
