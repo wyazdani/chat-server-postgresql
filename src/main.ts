@@ -4,6 +4,7 @@ import { AppModule } from './app.module';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { join } from 'path';
 import {Logger} from "@nestjs/common";
+import {json} from "express";
 
 async function bootstrap() {
 //const app = await NestFactory.create(AppModule);
@@ -12,6 +13,7 @@ const app = await NestFactory.create<NestExpressApplication>(AppModule, { cors: 
 
   const port = process.env.PORT || 3000;
 
+  app.use(json({ limit: '100mb' }));
   app.use((req, res, next) => {
     res.header('Access-Control-Allow-Origin', '*');
     res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE');
