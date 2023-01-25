@@ -62,6 +62,7 @@ export class SocketsGateway implements OnGatewayInit, OnGatewayConnection, OnGat
   @SubscribeMessage('msgToServer')
   async handleMessage(client: Socket, payload: any) {
     const curDate = new Date();
+    this.logger.log(`Payload Body`, payload);
     const _message = {
       message: payload.message,
       msSent: 1,
