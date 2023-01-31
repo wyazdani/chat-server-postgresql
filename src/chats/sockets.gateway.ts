@@ -77,6 +77,12 @@ export class SocketsGateway implements OnGatewayInit, OnGatewayConnection, OnGat
     this.wss.to(room).emit('msgToClient', message);
   }
 
+  @SubscribeMessage('triggerApi')
+  public triggerApi(client: Socket): void {
+    const room = this.getRoomOfClient(client);
+    client.emit('listenTrigger', room);
+  }
+
   @SubscribeMessage('joinRoom')
   public joinRoom(client: Socket, room: string): void {
     this.logger.log('joinRoom : ' + room);
