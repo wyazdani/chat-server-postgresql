@@ -5,27 +5,28 @@ import {
   OnGatewayInit,
   OnGatewayConnection,
   OnGatewayDisconnect,
-  WebSocketServer} from '@nestjs/websockets';
+  WebSocketServer
+} from '@nestjs/websockets';
 import { Socket, Server } from 'socket.io';
 import { HttpService } from '@nestjs/axios';
 import { map, tap } from 'rxjs/operators';
 import axios from 'axios';
 import appConfig from '../config/app.config';
-import {RoomInfo} from "./roomInfo";
-import {ClientSocketInfo} from "./clientSocketInfo";
-import {RoleEnum} from "../support/support.gateway";
+import { RoomInfo } from "./roomInfo";
+import { ClientSocketInfo } from "./clientSocketInfo";
+import { RoleEnum } from "../support/support.gateway";
 
 
-@WebSocketGateway({ allowEIO3:true })
+@WebSocketGateway({ allowEIO3: true })
 export class SocketsGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
-//  export class ChatsGateway {
+  //  export class ChatsGateway {
   @WebSocketServer() wss: Server;
   private lstClients = [];
   private lstRooms = [];
   private logger: Logger = new Logger('SocketsGateway');
   public chatId = '';
 
-  constructor(private httpService: HttpService) {}
+  constructor(private httpService: HttpService) { }
 
   afterInit(server: Server) {
     this.logger.log('Initialized SocketsGateway!');
@@ -48,11 +49,11 @@ export class SocketsGateway implements OnGatewayInit, OnGatewayConnection, OnGat
   async connect(client: Socket, payload: any): Promise<void> {
 
     const data = { recipient_id: payload.receiver_id };
-    const room = await this.httpService.axiosRef.post( `${appConfig().backendDomain}/messages/create-room`,data, {
+    const room = await this.httpService.axiosRef.post(`${appConfig().backendDomain}/messages/create-room`, data, {
       headers: {
         Authorization: payload.token
       }
-    }  );
+    });
     const roomId = room.data.data;
     this.logger.log(`Connect Conversation ` + roomId);
     this.addClient(client, payload.sender_id, roomId);
@@ -78,9 +79,9 @@ export class SocketsGateway implements OnGatewayInit, OnGatewayConnection, OnGat
   }
 
   @SubscribeMessage('triggerApi')
-  public triggerApi(client: Socket): void {
+  public triggerApi(client: Socket, payload: any): void {
     const room = this.getRoomOfClient(client);
-    client.emit('listenTrigger', room);
+    this.wss.to(room).emit('listenTrigger', payload);
   }
 
   @SubscribeMessage('joinRoom')
@@ -139,12 +140,12 @@ export class SocketsGateway implements OnGatewayInit, OnGatewayConnection, OnGat
       if (objRoom.UserMessages.length > 0) {
         const payload = objRoom.UserMessages[0];
         objRoom.UserMessages = [];
-        const data = { user_id: payload.user_id, room_id: roomID, message: payload.message, attachment: payload.attachment};
-        const messageResponse = await this.httpService.axiosRef.post( `${appConfig().backendDomain}/messages/create`,data, {
+        const data = { user_id: payload.user_id, room_id: roomID, message: payload.message, attachment: payload.attachment };
+        const messageResponse = await this.httpService.axiosRef.post(`${appConfig().backendDomain}/messages/create`, data, {
           headers: {
             Authorization: payload.token
           }
-        } );
+        });
         return messageResponse.data.data;
       }
     }
@@ -171,11 +172,11 @@ export class SocketsGateway implements OnGatewayInit, OnGatewayConnection, OnGat
       role: RoleEnum.ADMIN,
       attachment: payload?.attachment,
     };
-    const message = await this.httpService.axiosRef.post( `${appConfig().backendDomain}/system-supports/message`,ticketMessage, {
+    const message = await this.httpService.axiosRef.post(`${appConfig().backendDomain}/system-supports/message`, ticketMessage, {
       headers: {
         Authorization: payload.token
       }
-    } );
+    });
 
     //const message = await this.supportService.addMessage(ticketMessage);
 
@@ -190,11 +191,11 @@ export class SocketsGateway implements OnGatewayInit, OnGatewayConnection, OnGat
       role: RoleEnum.USER,
       attachment: payload?.attachment,
     };
-    const message = await this.httpService.axiosRef.post( `${appConfig().backendDomain}/system-supports/message`,ticketMessage, {
+    const message = await this.httpService.axiosRef.post(`${appConfig().backendDomain}/system-supports/message`, ticketMessage, {
       headers: {
         Authorization: payload.token
       }
-    } );
+    });
 
     this.wss.emit('msgSupport', message.data);
   }
