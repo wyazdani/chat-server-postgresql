@@ -16,7 +16,7 @@ import {ClientSocketInfo} from "./clientSocketInfo";
 import {RoleEnum} from "../support/support.gateway";
 
 
-@WebSocketGateway({ allowEIO3:true })
+@WebSocketGateway({ allowEIO3:true, cors:true })
 export class SocketsGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
 //  export class ChatsGateway {
   @WebSocketServer() wss: Server;
@@ -159,6 +159,7 @@ export class SocketsGateway implements OnGatewayInit, OnGatewayConnection, OnGat
 
   @SubscribeMessage('msgToAdmin')
   public async adminMessage(client: Socket, payload: any): Promise<void> {
+    console.log(payload)
     const ticketMessage = {
       ticket_id: payload.ticket_id,
       message: payload.message,
