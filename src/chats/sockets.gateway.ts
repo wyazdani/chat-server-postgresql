@@ -166,8 +166,9 @@ export class SocketsGateway implements OnGatewayInit, OnGatewayConnection, OnGat
 
   @SubscribeMessage('msgToAdmin')
   public async adminMessage(client: Socket, payload: any): Promise<void> {
+    const ticketId = payload.ticket_id;
     const ticketMessage = {
-      ticket_id: payload.ticket_id,
+      ticket_id: ticketId,
       message: payload.message,
       role: RoleEnum.ADMIN,
       attachment: payload?.attachment,
@@ -180,11 +181,12 @@ export class SocketsGateway implements OnGatewayInit, OnGatewayConnection, OnGat
 
     //const message = await this.supportService.addMessage(ticketMessage);
 
-    this.wss.emit('msgSupport', message.data);
+    this.wss.to(ticketId).emit('msgSupport', message.data);
   }
 
   @SubscribeMessage('msgToUser')
   public async userMessage(client: Socket, payload: any): Promise<void> {
+    const ticketId = payload.ticket_id;
     const ticketMessage = {
       ticket_id: payload.ticket_id,
       message: payload.message,
@@ -197,7 +199,23 @@ export class SocketsGateway implements OnGatewayInit, OnGatewayConnection, OnGat
       }
     });
 
-    this.wss.emit('msgSupport', message.data);
+    this.wss.to(ticketId).emit('msgSupport', message.data);
+  }
+
+  @SubscribeMessage('supportFileTrigger')
+  public supportFileTrigger(client: Socket, payload: any): void {
+    const ticketId = payload.ticket_id;
+    this.wss.to(ticketId).emit('msgSupport', payload);
+  }
+
+  @SubscribeMessage('support_users')
+  async connectSupportUsers(client: Socket, payload: any): Promise<void> {
+
+
+    const ticketId = payload.ticket_id;
+    this.logger.log(`Connect Conversation ` + ticketId);
+    //this.addClient(client, payload.sender_id, roomId);
+    this.joinRoom(client, ticketId);
   }
 
 }
