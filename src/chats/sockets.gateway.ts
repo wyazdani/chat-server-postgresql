@@ -217,7 +217,8 @@ export class SocketsGateway implements OnGatewayInit, OnGatewayConnection, OnGat
 
   @SubscribeMessage('supportFileTrigger')
   public supportFileTrigger(client: Socket, payload: any): void {
-    const ticketId = payload.ticket_id;
+    const ticketId = payload.data.ticket_id;
+    this.logger.log(`supportFileTrigger ` + ticketId);
     this.wss.to(ticketId).emit('msgSupport', payload);
   }
 
