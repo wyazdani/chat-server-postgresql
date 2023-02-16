@@ -15,6 +15,7 @@ import appConfig from '../config/app.config';
 import { RoomInfo } from "./roomInfo";
 import { ClientSocketInfo } from "./clientSocketInfo";
 import { RoleEnum } from "../support/support.gateway";
+import {SupportClientSocketInfo} from "./supportClientSocketInfo";
 
 
 @WebSocketGateway({ allowEIO3:true, cors:true })
@@ -23,6 +24,7 @@ export class SocketsGateway implements OnGatewayInit, OnGatewayConnection, OnGat
   @WebSocketServer() wss: Server;
   private lstClients = [];
   private lstRooms = [];
+  private supportClients = [];
   private logger: Logger = new Logger('SocketsGateway');
   public chatId = '';
 
@@ -39,6 +41,7 @@ export class SocketsGateway implements OnGatewayInit, OnGatewayConnection, OnGat
   handleDisconnect(client: Socket) {
     this.logger.log(`Client disconnected: ${client.id}`);
 
+    this.deleteClient(client);
     const room = this.getRoomOfClient(client);
     if (room != '') {
       this.leaveRoom(client, room);
@@ -114,9 +117,20 @@ export class SocketsGateway implements OnGatewayInit, OnGatewayConnection, OnGat
   }
 
   deleteClient(client: Socket) {
+    this.logger.log('supportClient Length ' + this.supportClients.length);
     for (let i = 0; i < this.lstClients.length; i++) {
       if (this.lstClients[i]['ClientID'] === client.id) {
         this.lstClients.splice(i, 1);
+        break;
+      }
+    }
+    for (let i = 0; i < this.supportClients.length; i++) {
+      this.logger.log('supportClient ' + this.supportClients[i]['ClientID']);
+      this.logger.log('ClientID ' + client.id);
+      if (this.supportClients[i]['ClientID'] === client.id) {
+        client.leave(this.supportClients[i]['TicketID']);
+        this.logger.log('Client Disconnected : ' + this.supportClients[i]['ClientID']);
+        this.supportClients.splice(i, 1);
         break;
       }
     }
@@ -126,7 +140,6 @@ export class SocketsGateway implements OnGatewayInit, OnGatewayConnection, OnGat
 
     let res = '';
     const objClient = this.lstClients.find((o) => o.ClientID === client.id);
-    console.log(objClient);
     if (objClient != undefined) {
       res = objClient.RoomID;
     }
@@ -214,8 +227,20 @@ export class SocketsGateway implements OnGatewayInit, OnGatewayConnection, OnGat
 
     const ticketId = payload.ticket_id;
     this.logger.log(`Connect Conversation ` + ticketId);
-    //this.addClient(client, payload.sender_id, roomId);
-    this.joinRoom(client, ticketId);
+
+    this.addSupportClient(client, ticketId);
+    this.joinSupportChat(client, ticketId);
+  }
+
+  public joinSupportChat(client: Socket, ticketId: string): void {
+    this.logger.log('joinSupportChat : ' + ticketId);
+    client.join(ticketId);
+  }
+  addSupportClient(client: Socket, ticketId: string) {
+    this.logger.log('addSupportClient : ' + ticketId);
+    this.deleteClient(client);
+    const c = new SupportClientSocketInfo(client.id, ticketId);
+    this.supportClients.push(c);
   }
 
 }
