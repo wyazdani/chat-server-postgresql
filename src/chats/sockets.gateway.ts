@@ -51,6 +51,7 @@ export class SocketsGateway implements OnGatewayInit, OnGatewayConnection, OnGat
   @SubscribeMessage('connect_users')
   async connect(client: Socket, payload: any): Promise<void> {
     this.logger.log(`Payload Body`, payload);
+    this.logger.log(`Token`, payload?.token);
     const data = { recipient_id: payload.receiver_id };
     const room = await this.httpService.axiosRef.post(`${appConfig().backendDomain}/messages/create-room`, data, {
       headers: {
